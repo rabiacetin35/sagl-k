@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Etiket Okuma</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f7f7f7;
+            color: #333;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .highlight {
+            color: red;
+            font-weight: bold;
+        }
+        .output {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <h1>Etiket Okuma Uygulaması</h1>
+    <p>Fotoğraf yükleyin veya metni aşağıdaki kutuya yapıştırın:</p>
+    <input type="file" id="imageInput" accept="image/*">
+    <button id="analyzeImageButton">Fotoğrafı Analiz Et</button>
+    <textarea id="inputText" placeholder="Buraya içindekiler listesini yapıştırın..."></textarea>
+    <button id="analyzeButton">Analiz Et</button>
+
+    <div class="output" id="output"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.4/dist/tesseract.min.js"></script>
+    <script>
+        // Zararlı içerik listesi ve sağlık etkileri
+        const harmfulIngredients = {
+            "Aspartam": "Sinir sistemi üzerinde olumsuz etkiler yapabilir, baş ağrısı ve baş dönmesine yol açabilir.",
+            "Acesulfame K": "Kanserojen olma riski taşır ve karaciğer hasarına neden olabilir.",
+            "Sorbitol": "Fazla tüketimi mide rahatsızlıklarına ve ishale neden olabilir.",
+            "Sodyum Benzoat": "Hücre hasarına yol açabilir ve hiperaktiviteye neden olabilir.",
+            "Potasyum Sorbat": "Alerjik reaksiyonlara ve cilt tahrişine neden olabilir.",
+            "Monosodyum Glutamat (MSG)": "Baş ağrısı, bulantı ve cilt reaksiyonlarına yol açabilir.",
+            "Trans Yağ": "Kalp hastalıkları riskini artırır.",
+            "Hidrojenize Yağ": "Kolesterol seviyelerini olumsuz etkiler, kalp sağlığını tehdit eder.",
+            "Palm Yağı": "Yüksek kolesterol seviyelerine neden olabilir.",
+            "Tartrazin (E102)": "Alerjik reaksiyonlara ve hiperaktiviteye yol açabilir.",
+            "Allura Red (E129)": "Kanserojen olma riski taşır ve alerjik reaksiyonlara neden olabilir.",
+            "Sunset Yellow (E110)": "Alerjik reaksiyonlara ve hiperaktiviteye neden olabilir.",
+            "Glikoz Şurubu": "Kan şekeri seviyesini hızlıca yükseltir, diyabet riskini artırır.",
+            "Yüksek Fruktozlu Mısır Şurubu (HFCS)": "Karaciğer yağlanmasına ve obeziteye yol açabilir.",
+            "Sakkarin": "Kanserojen olma riski taşır.",
+            "Butillenmiş Hidroksitoluen (BHT)": "Hormon dengesizliklerine ve karaciğer hasarına neden olabilir.",
+            "Butillenmiş Hidroksianisol (BHA)": "Kanserojen olma riski taşır.",
+            "Propilen Glikol": "Cilt tahrişi ve alerjik reaksiyonlara neden olabilir.",
+            "Karbonatlı Amonyum": "Sindirim sistemi üzerinde olumsuz etkiler yapabilir.",
+            "Sodyum Nitrat": "Kanserojen bileşiklerin oluşumuna neden olabilir.",
+            "Sodyum Nitrit": "Kanserojen bileşiklerin oluşumuna neden olabilir."
+        };
+
+        // Zararlı içerikleri vurgulayan ve sağlık etkilerini ekleyen işlev
+        function highlightHarmfulIngredients(text) {
+            let highlightedText = text;
+            Object.keys(harmfulIngredients).forEach(ingredient => {
+                const regex = new RegExp(`\\b${ingredient}\\b`, 'gi'); // Kelimeyi tam eşleştirmek için regex
+                highlightedText = highlightedText.replace(regex, 
+                    `<span class="highlight">${ingredient}</span> (<em>${harmfulIngredients[ingredient]}</em>)`
+                );
+            });
+            return highlightedText;
+        }
+
+        // "Analiz Et" butonuna tıklama olayı
+        document.getElementById('analyzeButton').addEventListener('click', () => {
+            const inputText = document.getElementById('inputText').value;
+            const result = highlightHarmfulIngredients(inputText);
+            document.getElementById('output').innerHTML = result;
+        });
+
+        // Fotoğraf yükleme ve OCR işlemi
+        document.getElementById('analyzeImageButton').addEventListener('click', () => {
+            const imageInput = document.getElementById('imageInput');
+            if (imageInput.files.length === 0) {
+                alert('Lütfen bir fotoğraf yükleyin.');
+                return;
+            }
+
+            const file = imageInput.files[0];
+            Tesseract.recognize(
+                file,
+                'eng',
+                {
+                    logger: info => console.log(info)
+                }
+            ).then(({ data: { text } }) => {
+                console.log("Çıkarılan metin:", text); // Çıkarılan metni kontrol edin
+                const result = highlightHarmfulIngredients(text);
+                document.getElementById('output').innerHTML = result;
+            }).catch(err => {
+                console.error("Hata:", err); // Hatayı detaylı görün
+                alert('Fotoğraf işlenirken bir hata oluştu.');
+            });
+        });
+    </script>
+</body>
+</html>
